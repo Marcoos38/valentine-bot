@@ -1,0 +1,6 @@
+anthropic
+openwakeword
+pyaudio
+numpy
+webrtcvad
+requests
