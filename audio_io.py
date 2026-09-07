@@ -28,6 +28,10 @@ class Microphone:
     def read_chunk(self) -> bytes:
         return self._stream.read(config.CHUNK_SIZE, exception_on_overflow=False)
 
+    def flush(self):
+        self._stream.stop_stream()
+        self._stream.start_stream()
+
     def close(self):
         self._stream.stop_stream()
         self._stream.close()
@@ -51,25 +55,32 @@ def record_until_silence(mic: Microphone) -> bytes:
     )
 
     silence_run = 0
+    speech_run = 0
     heard_speech = False
+    MIN_CONSECUTIVE_SPEECH_CHUNKS = 3
 
     for _ in range(max_chunks):
         chunk = mic.read_chunk()
         frames.append(chunk)
 
-        # webrtcvad wants 10/20/30ms frames; our 80ms chunk is split into 20ms sub-frames
         is_speech = _chunk_has_speech(vad, chunk)
 
         if is_speech:
-            heard_speech = True
+            speech_run += 1
             silence_run = 0
-        elif heard_speech:
-            silence_run += 1
-            if silence_run >= silence_chunks_needed:
-                break
+            if speech_run >= MIN_CONSECUTIVE_SPEECH_CHUNKS:
+                heard_speech = True
+        else:
+            speech_run = 0
+            if heard_speech:
+                silence_run += 1
+                if silence_run >= silence_chunks_needed:
+                    break
+
+    if not heard_speech:
+        return None
 
     return _frames_to_wav(frames)
-
 
 def _chunk_has_speech(vad: webrtcvad.Vad, chunk: bytes) -> bool:
     frame_bytes = int(config.SAMPLE_RATE * 0.02) * 2  # 20ms, 16-bit samples
@@ -92,4 +103,4 @@ def _frames_to_wav(frames) -> bytes:
 
 def play_wav_file(path: str):
     """Plays a WAV file using aplay (standard on Raspberry Pi OS)."""
-    subprocess.run(["aplay", "-q", path], check=False)
+    subprocess.run(["aplay", "-q", "-D", config.AUDIO_OUTPUT_DEVICE, path], check=False)

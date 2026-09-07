@@ -10,13 +10,19 @@ from audio_io import Microphone
 
 class WakeWordListener:
     def __init__(self):
-        self._model = Model(wakeword_models=[config.WAKE_WORD_MODEL])
+        self._model = Model(wakeword_models=[config.WAKE_WORD_MODEL], inference_framework="onnx")
 
     def wait_for_wake_word(self, mic: Microphone):
         """Blocks until the configured wake word is detected."""
+        downsample_factor = config.SAMPLE_RATE // 16000
+
         while True:
             chunk = mic.read_chunk()
             audio = np.frombuffer(chunk, dtype=np.int16)
+
+            if downsample_factor > 1:
+                audio = audio[::downsample_factor]
+
             predictions = self._model.predict(audio)
 
             for model_name, score in predictions.items():

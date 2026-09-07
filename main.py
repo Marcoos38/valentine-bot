@@ -23,7 +23,11 @@ def main():
             wav_bytes = record_until_silence(mic)
 
             print("Transcribing...")
-            user_text = transcribe(wav_bytes)
+            try:
+                user_text = transcribe(wav_bytes)
+            except Exception as e:
+                print(f"(transcription failed: {e}, going back to sleep)")
+                continue
             if not user_text:
                 print("(heard nothing usable, going back to sleep)")
                 continue
@@ -34,6 +38,7 @@ def main():
             print(f"Reply: {reply_text}")
 
             speak(reply_text)
+            mic.flush()
             print("Ready. Waiting for wake word...")
 
     except KeyboardInterrupt:
