@@ -1,7 +1,6 @@
 # Valentine-bot - full backup
 
-This is the complete, current state of the Valentine conversational AI project
-as of tonight's session: wake word, conversation loop, personality, long-term
+This is the complete, current state of the Valentine conversational AI project: wake word, conversation loop, personality, long-term
 memory, idle behavior, vision (camera), and background music with ducking.
 
 ## Files
