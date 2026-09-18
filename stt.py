@@ -1,22 +1,21 @@
 """
 Speech-to-text using OpenAI's hosted Whisper API.
-
-Using the API instead of running Whisper locally because Whisper (even the
-small models) is slow on a Pi's CPU. This trades a small per-call cost and
-a network round trip for much lower latency and zero local compute load.
 """
 import re
+
 import requests
 
 import config
 
 WHISPER_URL = "https://api.openai.com/v1/audio/transcriptions"
+
 _KNOWN_HALLUCINATIONS = {
     "thank you", "thank you.", "thanks.", "thanks for watching",
     "thanks for watching.", "thanks for watching!",
     "thank you for watching", "thank you for watching!",
     "please subscribe.", "you", ".", "..", ". .",
 }
+
 
 def transcribe(wav_bytes: bytes) -> str:
     if not config.OPENAI_API_KEY:
@@ -35,10 +34,13 @@ def transcribe(wav_bytes: bytes) -> str:
     text = response.json()["text"].strip()
 
     normalized = text.lower().strip(" .!")
-    if normalized in _KNOWN_HALLUCINATIONS or "thank you" in normalized or "thanks for watching" in normalized:
+    if (
+        normalized in _KNOWN_HALLUCINATIONS
+        or "thank you" in normalized
+        or "thanks for watching" in normalized
+    ):
         return ""
 
-    # Catch anything that's just punctuation/whitespace with no real words in it
     if not re.search(r"[a-zA-Z0-9]", text):
         return ""
 

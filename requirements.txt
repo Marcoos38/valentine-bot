@@ -1,6 +1,8 @@
 anthropic
-openwakeword
+openwakeword==0.6.0
+onnxruntime
 pyaudio
 numpy
 webrtcvad
 requests
+setuptools<81
